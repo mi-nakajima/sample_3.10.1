@@ -26,6 +26,7 @@ jobs:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
 
+    needs: set-env
     steps:
     # リポジトリのコードをチェックアウト
     - name: Checkout code
@@ -44,8 +45,8 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         #flutter-version: ${{ env.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
-        #flutter-version: ${{ needs.set-env.outputs.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
-        flutter-version: "3.10.1"
+        flutter-version: ${{ needs.set-env.outputs.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
+        #flutter-version: "3.10.1"
         cache: true
 
     # flutter cleanを実行してキャッシュを削除
