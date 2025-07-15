@@ -1,4 +1,4 @@
-name: Flutter CI
+name: Flutter CI Android
 
 # ワークフローをトリガーするイベントを定義
 on:
@@ -27,6 +27,8 @@ jobs:
   build:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
+    environment:
+      name: KEY_STORE_PASSWORD
 
     steps:
     # リポジトリのコードをチェックアウト
