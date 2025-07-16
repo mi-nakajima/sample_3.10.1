@@ -87,7 +87,7 @@ jobs:
         KEY_PATH: key.jks
 
     # ビルドしたapkをgithub Actionsアップロード
-    - name: "Deploy apk 🚀"
+    - name: "Deploy apk"
       uses: actions/upload-artifact@v4
       with:
         name: release-apk  # アーティファクトの名前
