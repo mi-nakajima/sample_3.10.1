@@ -1,4 +1,4 @@
-name: Flutter CI Android
+name: Flutter CI iOS
 
 # ワークフローをトリガーするイベントを定義
 on:
@@ -26,9 +26,10 @@ jobs:
 
   build:
     # ジョブが実行される仮想環境を指定
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    timeout-minutes: 20
     environment:
-      name: ANDROID_KEY_STORE
+      name: IOS_CERTIFICATES
 
     needs: set-env
     steps:
@@ -61,36 +62,39 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
 
-    # リモートリポジトリでGitHub Secretsから.envファイルを動的に作成
-    #- name: Create .env
-    #  run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+    # 証明書の生成
+    - name: Import Provisioning Profile
+      run: |
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        touch ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+        echo -n '${{ secrets.PROVISIONING_PROFILE }}' | base64 -d -o ~/Library/MobileDevice/Provisioning\ Profiles/sadistributionmple_dist.mobileprovision
 
-    # リントチェックを実行
-    - name: Run linter
-      run: flutter analyze
+    # 署名をする
+    - name: Import Code-Signing Certificates
+      uses: Apple-Actions/import-codesign-certs@v1
+      with:
+        p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
+        p12-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 
-    # テストを実行
-    - name: Run tests
-      run: flutter test
+    # ipa ファイルの出力
+    - name: Create ipa file
+      # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
+      run: flutter build ipa --export-options-plist=ios/Runner/ExportOptions.plist --build-number ${GITHUB_RUN_NUMBER}
 
-    # Androidのkeystoreファイル（key.jks）をSecretsからデコードして配置
-    - name: Decode keystore
-      run: echo "${{ secrets.SIGNING_KEY }}" | base64 -d > android/app/key.jks
+    # AppStoreConnect にアップロードする
+    #- name: Upload to AppStoreConnect
+    #  run: xcrun altool --upload-app -f "./build/ios/ipa/github_actios_sample.ipa" -u "${{ secrets.APPLE_ID }}" -p "${{ secrets.APPLE_APP_PASS }}"
 
-    # Androidのビルド（Secretsから署名情報を取得）
-    - name: Build APK (Android)
-      run: flutter build apk --release
-      env:
-        KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        ALIAS: ${{ secrets.ALIAS }}
-        KEY_PATH: key.jks
-
-    # ビルドしたapkをgithub Actionsアップロード
-    - name: "Deploy apk"
+    - name: collect ipa artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: release-apk  # アーティファクトの名前
-        path: build/app/outputs/flutter-apk/app-release.apk
+        name: release-ipa
+        path: build/ios/ipa/*.ipa
         #retention-days: 7 # 7日間保存
         retention-days: 1
+
+    - name: Clean up keychain and provisioning profile
+      if: ${{ always() }}
+      run: |
+        security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+        rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
