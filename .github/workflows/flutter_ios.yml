@@ -69,8 +69,7 @@ jobs:
         echo -n '${{ secrets.PROVISIONING_PROFILE }}' | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
 
     - name: check Provisioning Profile
-      run: |
-        security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+      run: security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
 
     # 署名をする
     - name: Import Code-Signing Certificates
@@ -98,6 +97,6 @@ jobs:
 
     - name: Clean up keychain and provisioning profile
       if: ${{ always() }}
-      run: |
+      run: rm ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+    #  run: |
     #    security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-        rm ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
