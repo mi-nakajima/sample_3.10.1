@@ -5,7 +5,7 @@
 	<key>destination</key>
 	<string>export</string>
 	<key>method</key>
-	<string>development</string>
+	<string>app-store</string>
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>jp.co.manage-b.sample</key>
@@ -22,6 +22,6 @@
 	<key>uploadBitcode</key>
 	<false/>
 	<key>uploadSymbols</key>
-	<false/>
+	<true/>
 </dict>
 </plist>
