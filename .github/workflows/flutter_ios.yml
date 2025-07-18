@@ -3,6 +3,18 @@ name: Flutter CI iOS
 # ワークフローをトリガーするイベントを定義
 on:
   workflow_dispatch:
+    inputs:
+      target_env_name:
+        type: choice
+        description: Target env name [dev, prd]
+        required: true
+        default: 'dev'
+        options: [dev, prd]
+      retention-days:
+        type: number
+        description: upload-artifact retention-days
+        required: true
+        default: 7
 #on:
 #  push:
 #    branches:
@@ -17,19 +29,27 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       FLUTTER_VERSION: ${{ steps.set_vars.outputs.FLUTTER_VERSION }}
+      EXPORT_OPTIONS: ${{ steps.set_vars.outputs.EXPORT_OPTIONS }}
     steps:
+      - name: Print inputs
+        run: |
+          echo "target_env_name: ${{ inputs.target_env_name }}"
+          echo "retention-days : ${{ inputs.retention-days }}"
+
       - name: Set vars
         id: set_vars
         run: |
           readonly FLUTTER_VERSION="3.10.1"
           echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
+          readonly EXPORT_OPTIONS="ExportOptions_${{ inputs.target_env_name }}.plist"
+          echo "EXPORT_OPTIONS=$EXPORT_OPTIONS" >> $GITHUB_OUTPUT
 
   build:
     # ジョブが実行される仮想環境を指定
     runs-on: macos-latest
     timeout-minutes: 20
     environment:
-      name: IOS_CERTIFICATES
+      name: ${{ (contains( inputs.target_env_name, 'prd' ) && 'PRD_IOS_CERTIFICATES') || (true && 'IOS_CERTIFICATES') }}
 
     needs: set-env
     steps:
@@ -78,16 +98,16 @@ jobs:
         p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
         p12-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 
-    #- name: cat Runner.xcworkspace
-    #  run: ls ios/Runner.xcworkspace && cat ios/Runner.xcworkspace
+    - name: cat Runner.xcworkspace
+      run: test -f ios/Runner.xcworkspace && cat ios/Runner.xcworkspace
 
     - name: cat ExportOptions.plist
-      run: cat ios/Runner/ExportOptions.plist
+      run: cat ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }}
 
     # ipa ファイルの出力
     - name: Create ipa file
       # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
-      run: flutter build ipa --export-options-plist=ios/Runner/ExportOptions.plist --build-number ${GITHUB_RUN_NUMBER}
+      run: flutter build ipa --export-options-plist=ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }} --build-number ${GITHUB_RUN_NUMBER}
 
     # AppStoreConnect にアップロードする
     #- name: Upload to AppStoreConnect
