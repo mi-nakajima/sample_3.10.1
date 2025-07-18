@@ -10,7 +10,7 @@ on:
         required: true
         default: 'dev'
         options: [dev, prd]
-      retention-days:
+      retention_days:
         type: number
         description: upload-artifact retention-days
         required: true
@@ -105,4 +105,4 @@ jobs:
         name: release-apk  # アーティファクトの名前
         path: build/app/outputs/flutter-apk/app-release.apk
         #retention-days: 7 # 7日間保存
-        retention-days: github.event.inputs.retention-days
+        retention-days: github.event.inputs.retention_days
