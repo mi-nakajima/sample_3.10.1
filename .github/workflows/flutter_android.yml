@@ -10,7 +10,7 @@ on:
         required: true
         default: 'dev'
         options: [dev, prd]
-      retention_days:
+      retention-days:
         type: number
         description: upload-artifact retention-days
         required: true
@@ -40,7 +40,7 @@ jobs:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
     environment:
-      name: ${{ (contains( github.event.inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
+      name: ${{ (contains( inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
 
     needs: set-env
     steps:
@@ -105,4 +105,4 @@ jobs:
         name: release-apk  # アーティファクトの名前
         path: build/app/outputs/flutter-apk/app-release.apk
         #retention-days: 7 # 7日間保存
-        retention-days: inputs.retention_days
+        retention-days: ${{ inputs.retention-days }}
