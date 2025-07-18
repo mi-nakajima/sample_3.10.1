@@ -30,6 +30,11 @@ jobs:
     outputs:
       FLUTTER_VERSION: ${{ steps.set_vars.outputs.FLUTTER_VERSION }}
     steps:
+      - name: Print inputs
+        run: |
+          echo "target_env_name: ${{ inputs.target_env_name }}"
+          echo "retention-days : ${{ inputs.retention-days }}"
+
       - name: Set vars
         id: set_vars
         run: |
