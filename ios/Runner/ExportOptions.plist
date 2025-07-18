@@ -8,8 +8,8 @@
 	<string>development</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>jp.co.manage-b.sample</key>
-		<string>distribution</string>
+		<key>Name</key>
+		<string>jp.co.manage-b.sample</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
