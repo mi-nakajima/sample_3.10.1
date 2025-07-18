@@ -8,8 +8,8 @@
 	<string>development</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>Name</key>
-		<string>jp.co.manage-b.sample</string>
+		<key>jp.co.manage-b.sample</key>
+		<string>fujita osamu (HW3W8B2484)</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
