@@ -40,7 +40,7 @@ jobs:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
     environment:
-      name: ${{ contains( github.event.inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
+      name: ${{ (contains( github.event.inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
 
     needs: set-env
     steps:
