@@ -119,7 +119,7 @@ jobs:
         name: release-ipa
         path: build/ios/ipa/*.ipa
         #retention-days: 7 # 7日間保存
-        retention-days: 1
+        retention-days: ${{ inputs.retention-days }}
 
     - name: Clean up keychain and provisioning profile
       if: ${{ always() }}
