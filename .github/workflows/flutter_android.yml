@@ -3,6 +3,18 @@ name: Flutter CI Android
 # ワークフローをトリガーするイベントを定義
 on:
   workflow_dispatch:
+    inputs:
+      target_env_name:
+        type: choice
+        description: Target env name [dev, prd]
+        required: true
+        default: 'dev'
+        options: [dev, prd]
+      retention-days:
+        type: number
+        description: upload-artifact retention-days
+        required: true
+        default: 7
 #on:
 #  push:
 #    branches:
@@ -28,7 +40,7 @@ jobs:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
     environment:
-      name: ANDROID_KEY_STORE
+      name: ${{ contains( github.event.inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
 
     needs: set-env
     steps:
@@ -93,4 +105,4 @@ jobs:
         name: release-apk  # アーティファクトの名前
         path: build/app/outputs/flutter-apk/app-release.apk
         #retention-days: 7 # 7日間保存
-        retention-days: 1
+        retention-days: github.event.inputs.retention-days
