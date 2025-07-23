@@ -107,7 +107,8 @@ jobs:
     # ipa ファイルの出力
     - name: Create ipa file
       # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
-      run: flutter build ipa --export-options-plist=ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }} --build-number ${GITHUB_RUN_NUMBER}
+      #run: flutter build ipa --export-options-plist=ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }} --build-number ${GITHUB_RUN_NUMBER}
+      run: flutter build ios --simulator --debug --no-codesign
 
     # AppStoreConnect にアップロードする
     #- name: Upload to AppStoreConnect
@@ -117,7 +118,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: release-ipa
-        path: build/ios/ipa/*.ipa
+        #path: build/ios/ipa/*.ipa
+        path: build/ios/iphonesimulator/*.app
         #retention-days: 7 # 7日間保存
         retention-days: ${{ inputs.retention-days }}
 
