@@ -11,21 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       FLUTTER_VERSION: ${{ steps.set_vars.outputs.FLUTTER_VERSION }}
-      EXPORT_OPTIONS: ${{ steps.set_vars.outputs.EXPORT_OPTIONS }}
     steps:
       - name: Set vars
         id: set_vars
         run: |
           readonly FLUTTER_VERSION="3.10.1"
           echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
-          readonly EXPORT_OPTIONS="ExportOptions_prd.plist"
-          echo "EXPORT_OPTIONS=$EXPORT_OPTIONS" >> $GITHUB_OUTPUT
 
   build:
     runs-on: macos-latest
     timeout-minutes: 30
     environment:
       name: 'PRD_IOS_CERTIFICATES'
+    needs: set-env
 
     steps:
       - name: Checkout
@@ -66,7 +64,7 @@ jobs:
         env:
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: xcodebuild -exportArchive -archivePath ./build/ios/Runner.xcarchive -exportPath ./build/ios/ipa -exportOptionsPlist ./ios/ExportOptions.plist -allowProvisioningUpdates -authenticationKeyIssuerID $APPLE_API_ISSUER_ID -authenticationKeyID $APPLE_API_KEY_ID -authenticationKeyPath `pwd`/private_keys/AuthKey_$APPLE_API_KEY_ID.p8
+        run: xcodebuild -exportArchive -archivePath ./build/ios/Runner.xcarchive -exportPath ./build/ios/ipa -exportOptionsPlist ./ios/Runner/ExportOptions_prd.plist -allowProvisioningUpdates -authenticationKeyIssuerID $APPLE_API_ISSUER_ID -authenticationKeyID $APPLE_API_KEY_ID -authenticationKeyPath `pwd`/private_keys/AuthKey_$APPLE_API_KEY_ID.p8
 
       - name: Detect path for ipa file
         run: |
