@@ -123,6 +123,17 @@ jobs:
         #retention-days: 7 # 7日間保存
         retention-days: ${{ inputs.retention-days }}
 
+    - name: Create pod file
+      run: cd ios && pod install
+
+    - name: collect pod artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pod
+        path: ios/Pods/*
+        retention-days: ${{ inputs.retention-days }}
+
+
     - name: Clean up keychain and provisioning profile
       if: ${{ always() }}
       run: rm ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
