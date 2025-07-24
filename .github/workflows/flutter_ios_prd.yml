@@ -1,4 +1,4 @@
-name: Automatically manage signing with Cloud signing
+name: Flutter CI iOS prd (Automatically manage signing with Cloud signing)
 
 on:
   workflow_dispatch:
@@ -58,8 +58,8 @@ jobs:
 
       - name: Archive by xcodebuild
         env:
-            APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
-            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: xcodebuild archive CODE_SIGNING_ALLOWED=NO -workspace ./ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath ./build/ios/Runner.xcarchive
 
       - name: Export by xcodebuild
