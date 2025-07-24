@@ -57,10 +57,10 @@ jobs:
         run: flutter build ios --release --no-codesign
 
       - name: Archive by xcodebuild
-          env:
-              APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
-              APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          run: xcodebuild archive CODE_SIGNING_ALLOWED=NO -workspace ./ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath ./build/ios/Runner.xcarchive
+        env:
+            APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: xcodebuild archive CODE_SIGNING_ALLOWED=NO -workspace ./ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath ./build/ios/Runner.xcarchive
 
       - name: Export by xcodebuild
         env:
