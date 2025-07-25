@@ -58,7 +58,7 @@ jobs:
         env:
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: xcodebuild archive CODE_SIGNING_ALLOWED=NO -workspace ./ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath ./build/ios/Runner.xcarchive
+        run: xcodebuild archive CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -workspace ./ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath ./build/ios/Runner.xcarchive
 
       - name: Export check
         env:
