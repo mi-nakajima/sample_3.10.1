@@ -3,6 +3,18 @@ name: Flutter CI Android
 # ワークフローをトリガーするイベントを定義
 on:
   workflow_dispatch:
+    inputs:
+      target_env_name:
+        type: choice
+        description: Target env name [dev, prd]
+        required: true
+        default: 'dev'
+        options: [dev, prd]
+      retention-days:
+        type: number
+        description: upload-artifact retention-days
+        required: true
+        default: 7
 #on:
 #  push:
 #    branches:
@@ -18,6 +30,11 @@ jobs:
     outputs:
       FLUTTER_VERSION: ${{ steps.set_vars.outputs.FLUTTER_VERSION }}
     steps:
+      - name: Print inputs
+        run: |
+          echo "target_env_name: ${{ inputs.target_env_name }}"
+          echo "retention-days : ${{ inputs.retention-days }}"
+
       - name: Set vars
         id: set_vars
         run: |
@@ -28,12 +45,13 @@ jobs:
     # ジョブが実行される仮想環境を指定
     runs-on: ubuntu-latest
     environment:
-      name: KEY_STORE_PASSWORD
+      name: ${{ (contains( inputs.target_env_name, 'prd' ) && 'PRD_ANDROID_KEY_STORE') || (true && 'DEV_ANDROID_KEY_STORE') }}
 
+    needs: set-env
     steps:
     # リポジトリのコードをチェックアウト
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     
     # fvmのバージョンを取得
     #- name: "Read flutter version from fvm config"
@@ -48,8 +66,8 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         #flutter-version: ${{ env.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
-        #flutter-version: ${{ needs.set-env.outputs.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
-        flutter-version: "3.10.1"
+        flutter-version: ${{ needs.set-env.outputs.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
+        #flutter-version: "3.10.1"
         cache: true
 
     # flutter cleanを実行してキャッシュを削除
@@ -86,9 +104,10 @@ jobs:
         KEY_PATH: key.jks
 
     # ビルドしたapkをgithub Actionsアップロード
-    - name: "Deploy apk 🚀"
+    - name: "Deploy apk"
       uses: actions/upload-artifact@v4
       with:
         name: release-apk  # アーティファクトの名前
         path: build/app/outputs/flutter-apk/app-release.apk
-        retention-days: 7 # 7日間保存
+        #retention-days: 7 # 7日間保存
+        retention-days: ${{ inputs.retention-days }}

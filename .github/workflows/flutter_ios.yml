@@ -1,0 +1,141 @@
+name: Flutter CI iOS
+
+# ワークフローをトリガーするイベントを定義
+on:
+  workflow_dispatch:
+    inputs:
+      target_env_name:
+        type: choice
+        description: Target env name [dev, prd]
+        required: true
+        default: 'dev'
+        options: [dev, prd]
+      retention-days:
+        type: number
+        description: upload-artifact retention-days
+        required: true
+        default: 7
+#on:
+#  push:
+#    branches:
+#      - main  # mainブランチへのpush時に実行
+#  pull_request:
+#    branches:
+#      - main  # mainブランチへのPR作成時に実行
+
+# ワークフロー内のジョブを定義
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      FLUTTER_VERSION: ${{ steps.set_vars.outputs.FLUTTER_VERSION }}
+      EXPORT_OPTIONS: ${{ steps.set_vars.outputs.EXPORT_OPTIONS }}
+    steps:
+      - name: Print inputs
+        run: |
+          echo "target_env_name: ${{ inputs.target_env_name }}"
+          echo "retention-days : ${{ inputs.retention-days }}"
+
+      - name: Set vars
+        id: set_vars
+        run: |
+          readonly FLUTTER_VERSION="3.10.1"
+          echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
+          readonly EXPORT_OPTIONS="ExportOptions_${{ inputs.target_env_name }}.plist"
+          echo "EXPORT_OPTIONS=$EXPORT_OPTIONS" >> $GITHUB_OUTPUT
+
+  build:
+    # ジョブが実行される仮想環境を指定
+    runs-on: macos-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ (contains( inputs.target_env_name, 'prd' ) && 'PRD_IOS_CERTIFICATES') || (true && 'IOS_CERTIFICATES') }}
+
+    needs: set-env
+    steps:
+    # リポジトリのコードをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # fvmのバージョンを取得
+    #- name: "Read flutter version from fvm config"
+    #  id: flutter_info
+    #  run: |
+    #    FLUTTER_VERSION=$(jq -r '.flutterSdkVersion' ./.fvm/fvm_config.json)
+    #    echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_ENV
+    #  shell: bash
+
+    # Flutterのセットアップ
+    - name: "Setup Flutter"
+      uses: subosito/flutter-action@v2
+      with:
+        #flutter-version: ${{ env.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
+        flutter-version: ${{ needs.set-env.outputs.FLUTTER_VERSION }}  # 取得したFlutterバージョンを使用
+        #flutter-version: "3.10.1"
+        cache: true
+
+    # flutter cleanを実行してキャッシュを削除
+    - name: Clean Flutter build
+      run: flutter clean
+
+    # Flutterの依存関係をインストール
+    - name: Install dependencies
+      run: flutter pub get
+
+    # 証明書の生成
+    - name: Import Provisioning Profile
+      run: |
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        echo -n '${{ secrets.PROVISIONING_PROFILE }}' | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+
+    - name: check Provisioning Profile
+      run: security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+
+    # 署名をする
+    - name: Import Code-Signing Certificates
+      uses: Apple-Actions/import-codesign-certs@v1
+      with:
+        p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
+        p12-password: ${{ secrets.CERTIFICATE_PASSWORD }}
+
+    #- name: cat Runner.xcworkspace
+    #  run: test -f ios/Runner.xcworkspace && cat ios/Runner.xcworkspace
+
+    - name: cat ExportOptions.plist
+      run: cat ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }}
+
+    # ipa ファイルの出力
+    - name: Create ipa file
+      # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
+      #run: flutter build ipa --export-options-plist=ios/Runner/${{ needs.set-env.outputs.EXPORT_OPTIONS }} --build-number ${GITHUB_RUN_NUMBER}
+      run: flutter build ios --simulator --debug --no-codesign
+
+    # AppStoreConnect にアップロードする
+    #- name: Upload to AppStoreConnect
+    #  run: xcrun altool --upload-app -f "./build/ios/ipa/github_actios_sample.ipa" -u "${{ secrets.APPLE_ID }}" -p "${{ secrets.APPLE_APP_PASS }}"
+
+    - name: collect ipa artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-ipa
+        #path: build/ios/ipa/*.ipa
+        path: build/ios/iphonesimulator/*.app
+        #retention-days: 7 # 7日間保存
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Create pod file
+      run: cd ios && pod install
+
+    - name: collect pod artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pod
+        path: ios/Pods/*
+        retention-days: ${{ inputs.retention-days }}
+
+
+    - name: Clean up keychain and provisioning profile
+      if: ${{ always() }}
+      run: rm ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+    #  run: |
+    #    security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
