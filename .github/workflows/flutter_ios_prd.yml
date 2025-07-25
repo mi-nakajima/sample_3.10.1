@@ -19,7 +19,8 @@ jobs:
           echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
 
   build:
-    runs-on: macos-latest
+    #runs-on: macos-latest
+    runs-on: macos-12
     timeout-minutes: 30
     environment:
       name: 'PRD_IOS_CERTIFICATES'
